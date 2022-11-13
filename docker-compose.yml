@@ -39,18 +39,18 @@ services:
     networks:
       - external_network
 
-  # db:
-  #   restart: always
-  #   image: postgres:15-alpine
-  #   healthcheck:
-  #     test: ["CMD", "pg_isready", "-U", "postgres"]
-  #   environment:
-  #     - POSTGRES_PASSWORD=6Y7ZMj3sqWpHP
-  #     - POSTGRES_HOST_AUTH_METHOD=trust
-  #   volumes:
-  #     - ./postgres:/var/lib/postgresql/data
-  #   networks:
-  #     - default
+  db:
+    restart: always
+    image: postgres:14-alpine
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+    environment:
+      - POSTGRES_PASSWORD=6Y7ZMj3sqWpHP
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    networks:
+      - internal_network
 
   redis:
     restart: always
@@ -60,7 +60,7 @@ services:
     volumes:
       - ./redis:/data
     networks:
-      - default
+      - internal_network
 
   web:
     image: tootsuite/mastodon:4.0.0rc3
@@ -72,6 +72,7 @@ services:
     expose:
       - "3000"
     depends_on:
+      - db
       - redis
       - traefik
     labels:
@@ -85,7 +86,7 @@ services:
       - ./public/system:/mastodon/public/system
     networks:
       - external_network
-      - default
+      - internal_network
 
   streaming:
     image: tootsuite/mastodon:4.0.0rc3
@@ -97,7 +98,7 @@ services:
     expose:
       - "4000"
     depends_on:
-      - web
+      - db
       - redis
       - traefik
     labels:
@@ -109,7 +110,7 @@ services:
       - "traefik.http.routers.mastodon-streaming.tls.certresolver=letsencrypt"
     networks:
       - external_network
-      - default
+      - internal_network
 
   sidekiq:
     image: tootsuite/mastodon:4.0.0rc3
@@ -117,15 +118,17 @@ services:
     env_file: .env.production
     command: bundle exec sidekiq
     depends_on:
-      - web
+      - db
       - redis
       - traefik
     volumes:
       - ./public/system:/mastodon/public/system
     networks:
       - external_network
-      - default
+      - internal_network
 
 networks:
   external_network:
     name: mastodon_external_network
+  internal_network:
+    internal: true    
