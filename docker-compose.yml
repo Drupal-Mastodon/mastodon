@@ -64,7 +64,7 @@ services:
   web:
     image: tootsuite/mastodon:4.0.0rc3
     restart: always
-    env_file: .env
+    env_file: .env.production
     command: bash -c "rm -f /mastodon/tmp/pids/server.pid; bundle exec rails s -p 3000"
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:3000/health || exit 1"]
@@ -90,7 +90,7 @@ services:
   streaming:
     image: tootsuite/mastodon:4.0.0rc3
     restart: always
-    env_file: .env
+    env_file: .env.production
     command: node ./streaming
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:4000/api/v1/streaming/health || exit 1"]
@@ -114,7 +114,7 @@ services:
   sidekiq:
     image: tootsuite/mastodon:4.0.0rc3
     restart: always
-    env_file: .env
+    env_file: .env.production
     command: bundle exec sidekiq
     depends_on:
       - db
