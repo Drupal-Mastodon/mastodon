@@ -42,6 +42,7 @@ services:
   db:
     restart: always
     image: postgres:14-alpine
+    container_name: db
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
     environment:
@@ -75,6 +76,8 @@ services:
       - db
       - redis
       - traefik
+    links:
+      - db:db      
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=mastodon_external_network"
