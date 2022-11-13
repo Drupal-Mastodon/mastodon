@@ -45,8 +45,8 @@ services:
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
     environment:
+      - "POSTGRES_HOST_AUTH_METHOD=trust"
       - POSTGRES_PASSWORD=6Y7ZMj3sqWpHP
-      - POSTGRES_HOST_AUTH_METHOD=trust
     volumes:
       - ./postgres:/var/lib/postgresql/data
     networks:
