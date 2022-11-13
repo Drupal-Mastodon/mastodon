@@ -134,8 +134,8 @@ services:
       - external_network
       - internal_network
 
-networks:
-  external_network:
-    name: mastodon_external_network
-  internal_network:
-    internal: true    
+# networks:
+#   external_network:
+#     name: mastodon_external_network
+#   internal_network:
+#     internal: true    
