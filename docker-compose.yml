@@ -22,7 +22,7 @@ services:
     labels:
       - "traefik.enable=true"
       # Dashboard
-      - "traefik.http.routers.traefik.rule=(Host(`${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`)))"
+      - "traefik.http.routers.traefik.rule=(Host(${DOMAIN}) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`)))"
       - "traefik.http.routers.traefik.service=api@internal"
       - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
       - "traefik.http.routers.traefik.entrypoints=websecure"
@@ -82,7 +82,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=mastodon_external_network"
       - "traefik.http.services.mastodon-web.loadbalancer.server.port=3000"
-      - "traefik.http.routers.mastodon-web.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.mastodon-web.rule=Host(${DOMAIN})"
       - "traefik.http.routers.mastodon-web.entrypoints=websecure"
       - "traefik.http.routers.mastodon-web.tls.certresolver=letsencrypt"
     volumes:
@@ -108,7 +108,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=mastodon_external_network"
       - "traefik.http.services.mastodon-streaming.loadbalancer.server.port=4000"
-      - "traefik.http.routers.mastodon-streaming.rule=(Host(`${DOMAIN}`) && PathPrefix(`/api/v1/streaming`))"
+      - "traefik.http.routers.mastodon-streaming.rule=(Host(${DOMAIN}) && PathPrefix(`/api/v1/streaming`))"
       - "traefik.http.routers.mastodon-streaming.entrypoints=websecure"
       - "traefik.http.routers.mastodon-streaming.tls.certresolver=letsencrypt"
     networks:
