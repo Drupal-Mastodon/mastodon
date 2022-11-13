@@ -1,0 +1,133 @@
+version: "3.7"
+
+services:
+  traefik:
+    image: traefik:2.9
+    container_name: "traefik"
+    restart: always
+    command:
+#      - "--log.level=DEBUG"
+      - "--api.dashboard=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=${LETSENCRYPT_MAIL_ADDRESS}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    labels:
+      - "traefik.enable=true"
+      # Dashboard
+      - "traefik.http.routers.traefik.rule=(Host(`${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`)))"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.middlewares=dashboardauth"
+      - "traefik.http.middlewares.dashboardauth.basicauth.users=admin:${TRAEFIK_DASHBOARD_ADMIN_PASSWORD}"
+      # HTTPS Redirect
+      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https@docker"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./letsencrypt:/letsencrypt
+    networks:
+      - external_network
+
+  db:
+    restart: always
+    image: postgres:15-alpine
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    networks:
+      - internal_network
+
+  redis:
+    restart: always
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+    volumes:
+      - ./redis:/data
+    networks:
+      - internal_network
+
+  web:
+    image: tootsuite/mastodon:4.0.0rc3
+    restart: always
+    env_file: .env
+    command: bash -c "rm -f /mastodon/tmp/pids/server.pid; bundle exec rails s -p 3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:3000/health || exit 1"]
+    expose:
+      - "3000"
+    depends_on:
+      - db
+      - redis
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=mastodon_external_network"
+      - "traefik.http.services.mastodon-web.loadbalancer.server.port=3000"
+      - "traefik.http.routers.mastodon-web.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.mastodon-web.entrypoints=websecure"
+      - "traefik.http.routers.mastodon-web.tls.certresolver=letsencrypt"
+    volumes:
+      - ./public/system:/mastodon/public/system
+    networks:
+      - external_network
+      - internal_network
+
+  streaming:
+    image: tootsuite/mastodon:4.0.0rc3
+    restart: always
+    env_file: .env
+    command: node ./streaming
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:4000/api/v1/streaming/health || exit 1"]
+    expose:
+      - "4000"
+    depends_on:
+      - db
+      - redis
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=mastodon_external_network"
+      - "traefik.http.services.mastodon-streaming.loadbalancer.server.port=4000"
+      - "traefik.http.routers.mastodon-streaming.rule=(Host(`${DOMAIN}`) && PathPrefix(`/api/v1/streaming`))"
+      - "traefik.http.routers.mastodon-streaming.entrypoints=websecure"
+      - "traefik.http.routers.mastodon-streaming.tls.certresolver=letsencrypt"
+    networks:
+      - external_network
+      - internal_network
+
+  sidekiq:
+    image: tootsuite/mastodon:4.0.0rc3
+    restart: always
+    env_file: .env
+    command: bundle exec sidekiq
+    depends_on:
+      - db
+      - redis
+      - traefik
+    volumes:
+      - ./public/system:/mastodon/public/system
+    networks:
+      - external_network
+      - internal_network
+
+networks:
+  external_network:
+    name: mastodon_external_network
+  internal_network:
+    internal: true
