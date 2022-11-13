@@ -50,7 +50,7 @@ services:
     volumes:
       - ./postgres:/var/lib/postgresql/data
     networks:
-      - internal_network
+      - default
 
   redis:
     restart: always
@@ -60,7 +60,7 @@ services:
     volumes:
       - ./redis:/data
     networks:
-      - internal_network
+      - default
 
   web:
     image: tootsuite/mastodon:4.0.0rc3
@@ -86,7 +86,7 @@ services:
       - ./public/system:/mastodon/public/system
     networks:
       - external_network
-      - internal_network
+      - default
 
   streaming:
     image: tootsuite/mastodon:4.0.0rc3
@@ -110,7 +110,7 @@ services:
       - "traefik.http.routers.mastodon-streaming.tls.certresolver=letsencrypt"
     networks:
       - external_network
-      - internal_network
+      - default
 
   sidekiq:
     image: tootsuite/mastodon:4.0.0rc3
@@ -125,10 +125,8 @@ services:
       - ./public/system:/mastodon/public/system
     networks:
       - external_network
-      - internal_network
+      - default
 
 networks:
   external_network:
     name: mastodon_external_network
-  internal_network:
-    internal: true
