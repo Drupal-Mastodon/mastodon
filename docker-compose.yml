@@ -72,7 +72,6 @@ services:
     expose:
       - "3000"
     depends_on:
-      - db
       - redis
       - traefik
     labels:
@@ -98,7 +97,7 @@ services:
     expose:
       - "4000"
     depends_on:
-      - db
+      - web
       - redis
       - traefik
     labels:
@@ -118,7 +117,7 @@ services:
     env_file: .env.production
     command: bundle exec sidekiq
     depends_on:
-      - db
+      - web
       - redis
       - traefik
     volumes:
