@@ -6,7 +6,7 @@ services:
     container_name: "traefik"
     restart: always
     command:
-#      - "--log.level=DEBUG"
+      #      - "--log.level=DEBUG"
       - "--api.dashboard=true"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
@@ -14,7 +14,7 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
-      - "--certificatesresolvers.letsencrypt.acme.email=pedro@cambrico.net"
+      - "--certificatesresolvers.letsencrypt.acme.email=noreply@drupal.community"
       - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
     ports:
       - "80:80"
