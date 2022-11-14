@@ -42,15 +42,13 @@ services:
   db:
     restart: always
     image: postgres:14-alpine
+    shm_size: 256mb
     container_name: db
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+    env_file: db.env
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_HOST: db
-    ports:
-      - "5432:5432"      
+      - 'POSTGRES_HOST_AUTH_METHOD=trust'
     volumes:
       - ./postgres:/var/lib/postgresql/data
     networks:
@@ -60,7 +58,7 @@ services:
     restart: always
     image: redis:7-alpine
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
     volumes:
       - ./redis:/data
     networks:
@@ -69,18 +67,20 @@ services:
   web:
     image: tootsuite/mastodon:4.0.0rc3
     restart: always
-    env_file: .env.production
+    env_file:
+      - .env.production
+      - db.env
     command: bash -c "rm -f /mastodon/tmp/pids/server.pid; bundle exec rails s -p 3000"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:3000/health || exit 1"]
-    expose:
-      - "3000"
+      test:
+        [
+          'CMD-SHELL',
+          'wget -q --spider --proxy=off localhost:3000/health || exit 1'
+        ]
     depends_on:
       - db
       - redis
       - traefik
-    links:
-      - db:db      
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=mastodon_external_network"
@@ -97,10 +97,16 @@ services:
   streaming:
     image: tootsuite/mastodon:4.0.0rc3
     restart: always
-    env_file: .env.production
+    env_file:
+      - .env.production
+      - db.env
     command: node ./streaming
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:4000/api/v1/streaming/health || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q --spider --proxy=off localhost:4000/api/v1/streaming/health || exit 1"
+        ]
     expose:
       - "4000"
     depends_on:
@@ -121,7 +127,9 @@ services:
   sidekiq:
     image: tootsuite/mastodon:4.0.0rc3
     restart: always
-    env_file: .env.production
+    env_file:
+      - .env.production
+      - db.env
     command: bundle exec sidekiq
     depends_on:
       - db
@@ -137,4 +145,4 @@ networks:
   external_network:
     name: mastodon_external_network
   internal_network:
-    internal: true    
+    internal: true
