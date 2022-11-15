@@ -2,40 +2,53 @@ version: "3.7"
 
 services:
   traefik:
-    image: traefik:2.9
-    container_name: "traefik"
+    image: traefik:latest
+    container_name: traefik
+    hostname: traefik
     restart: always
     command:
-      #      - "--log.level=DEBUG"
-      - "--api.dashboard=true"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
-      - "--certificatesresolvers.letsencrypt.acme.email=noreply@drupal.community"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      # Tell Traefik to discover containers using the Docker API
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      # Enable the Trafik dashboard
+      - --api.dashboard=true
+     # Set up LetsEncrypt
+      #- --certificatesresolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
+      - --certificatesresolvers.letsencrypt.acme.dnschallenge=true
+      - --certificatesresolvers.letsencrypt.acme.dnschallenge.provider=ovh
+      - --certificatesresolvers.letsencrypt.acme.email=noreply@drupal.community
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json      
+      # Set up an insecure listener that redirects all traffic to TLS
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)
+      - --traefik.http.routers.http-catchall.entrypoints=web
+      # Set up the TLS configuration for our websecure listener
+      - --entrypoints.websecure.http.tls=true
+      - --entrypoints.websecure.http.tls.certResolver=letsencrypt
+      - --entrypoints.websecure.http.tls.domains[0].main=drupal.community
+      - --entrypoints.websecure.http.tls.domains[0].sans=*.drupal.community
+    environment:
+      - OVH_ENDPOINT=${OVH_ENDPOINT}
+      - OVH_APPLICATION_KEY=${OVH_APPLICATION_KEY}
+      - OVH_APPLICATION_SECRET=${OVH_APPLICATION_SECRET}
+      - OVH_CONSUMER_KEY=${OVH_CONSUMER_KEY}   
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - certs:/letsencrypt
     labels:
       - "traefik.enable=true"
-      # Dashboard
-      - "traefik.http.routers.traefik.rule=(Host(`drupal.community`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`)))"
-      - "traefik.http.routers.traefik.service=api@internal"
-      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - 'traefik.http.routers.traefik.rule=Host(`drupal.community`)'
       - "traefik.http.routers.traefik.entrypoints=websecure"
-      - "traefik.http.routers.traefik.middlewares=dashboardauth"
-      - "traefik.http.middlewares.dashboardauth.basicauth.users=admin:${TRAEFIK_DASHBOARD_ADMIN_PASSWORD}"
-      # HTTPS Redirect
-      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
-      - "traefik.http.routers.http-catchall.entrypoints=web"
-      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https@docker"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./letsencrypt:/letsencrypt
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - 'traefik.http.routers.traefik.middlewares=strip'
+      - 'traefik.http.middlewares.strip.stripprefix.prefixes=/traefik'
     networks:
       - external_network
 
@@ -64,8 +77,37 @@ services:
     networks:
       - internal_network
 
+  es:
+    restart: always
+    container_name: es
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "cluster.name=es-mastodon"
+      - "discovery.type=single-node"
+      - "bootstrap.memory_lock=true"
+    networks:
+      - external_network
+      - internal_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      retries: 12
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - ./data:/usr/share/elasticsearch/data:rw
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"      
+
   web:
-    image: tootsuite/mastodon:4.0.0rc3
+    image: tootsuite/mastodon:4.0.2
     restart: always
     env_file:
       - .env.production
@@ -82,12 +124,12 @@ services:
       - redis
       - traefik
     labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=mastodon_external_network"
-      - "traefik.http.services.mastodon-web.loadbalancer.server.port=3000"
-      - "traefik.http.routers.mastodon-web.rule=Host(`drupal.community`)"
-      - "traefik.http.routers.mastodon-web.entrypoints=websecure"
-      - "traefik.http.routers.mastodon-web.tls.certresolver=letsencrypt"
+      - traefik.enable=true
+      - traefik.http.routers.mastodonweb.rule=Host(`drupal.community`)
+      - traefik.http.routers.mastodonweb.entrypoints=websecure
+      - traefik.http.routers.mastodonweb.tls.certresolver=letsencrypt
+      - traefik.http.services.mastodonweb.loadbalancer.server.port=3000
+
     volumes:
       - ./public/system:/mastodon/public/system
     networks:
@@ -95,7 +137,7 @@ services:
       - internal_network
 
   streaming:
-    image: tootsuite/mastodon:4.0.0rc3
+    image: tootsuite/mastodon:4.0.2
     restart: always
     env_file:
       - .env.production
@@ -114,18 +156,18 @@ services:
       - redis
       - traefik
     labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=mastodon_external_network"
-      - "traefik.http.services.mastodon-streaming.loadbalancer.server.port=4000"
-      - "traefik.http.routers.mastodon-streaming.rule=(Host(`drupal.community`) && PathPrefix(`/api/v1/streaming`))"
-      - "traefik.http.routers.mastodon-streaming.entrypoints=websecure"
-      - "traefik.http.routers.mastodon-streaming.tls.certresolver=letsencrypt"
+      - traefik.enable=true
+      - traefik.http.routers.mastodonstreaming.rule=(Host(`drupal.community`) && PathPrefix(`/api/v1/streaming`))
+      - traefik.http.routers.mastodonstreaming.entrypoints=websecure
+      - traefik.http.routers.mastodonstreaming.tls.certresolver=letsencrypt
+      - traefik.http.services.mastodonstreaming.loadbalancer.server.port=4000
+
     networks:
       - external_network
       - internal_network
 
   sidekiq:
-    image: tootsuite/mastodon:4.0.0rc3
+    image: tootsuite/mastodon:4.0.2
     restart: always
     env_file:
       - .env.production
