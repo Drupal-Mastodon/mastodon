@@ -11,7 +11,7 @@ services:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
       # Enable the Trafik dashboard
-      - --api.dashboard=TRUE
+      - --api.dashboard=true
      # Set up LetsEncrypt
       #- --certificatesresolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
       - --certificatesresolvers.letsencrypt.acme.dnschallenge=true
@@ -25,10 +25,6 @@ services:
       - --entrypoints.web.http.redirections.entrypoint.to=websecure
       - --entrypoints.web.http.redirections.entrypoint.scheme=https
       - --entrypoints.websecure.address=:443
-      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
-      - "traefik.http.routers.http-catchall.entrypoints=web"
-      - "traefik.http.middlewares.dashboardauth.basicauth.users=admin:${TRAEFIK_DASHBOARD_ADMIN_PASSWORD}"
-      - "traefik.http.routers.traefik.middlewares=dashboardauth"
       # Set up the TLS configuration for our websecure listener
       - --entrypoints.websecure.http.tls=true
       - --entrypoints.websecure.http.tls.certResolver=letsencrypt
@@ -53,6 +49,9 @@ services:
       - "traefik.http.routers.traefik.service=api@internal"
       - 'traefik.http.routers.traefik.middlewares=strip'
       - 'traefik.http.middlewares.strip.stripprefix.prefixes=/traefik'
+      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.middlewares.dashboardauth.basicauth.users=admin:${TRAEFIK_DASHBOARD_ADMIN_PASSWORD}"
+      - "traefik.http.routers.traefik.middlewares=dashboardauth"      
     networks:
       - external_network
 
