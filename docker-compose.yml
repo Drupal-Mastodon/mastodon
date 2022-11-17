@@ -20,7 +20,7 @@ services:
       - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
       - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
       - --certificatesresolvers.letsencrypt.acme.email=noreply@drupal.community
-      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json      
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
       # Set up an insecure listener that redirects all traffic to TLS
       - --entrypoints.web.address=:80
       - --entrypoints.web.http.redirections.entrypoint.to=websecure
@@ -36,7 +36,7 @@ services:
       - OVH_ENDPOINT=${OVH_ENDPOINT}
       - OVH_APPLICATION_KEY=${OVH_APPLICATION_KEY}
       - OVH_APPLICATION_SECRET=${OVH_APPLICATION_SECRET}
-      - OVH_CONSUMER_KEY=${OVH_CONSUMER_KEY}   
+      - OVH_CONSUMER_KEY=${OVH_CONSUMER_KEY}
     ports:
       - '80:80'
       - '8080:8080'
@@ -45,7 +45,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/letsencrypt
     labels:
-      - "traefik.enable=true"   
+      - "traefik.enable=true"
     networks:
       - external_network
       - internal_network
@@ -102,7 +102,7 @@ services:
   #   logging:
   #     driver: "json-file"
   #     options:
-  #       max-size: "10m"      
+  #       max-size: "10m"
 
   web:
     image: tootsuite/mastodon:v4.0.2
@@ -116,14 +116,14 @@ services:
         [
           'CMD-SHELL',
           'wget -q --spider --proxy=off localhost:3000/health || exit 1'
-        ]      
+        ]
     depends_on:
       - db
       - redis
       - traefik
     labels:
       - traefik.enable=true
-      - traefik.http.routers.mastodonweb.rule=Host(`drupal.community`)
+      - traefik.http.routers.mastodonweb.rule=(Host(`drupal.community`) && !PathPrefix(`/api/udp/routers`) && !PathPrefix(`/api/overview`))
       - traefik.http.routers.mastodonweb.entrypoints=websecure
       - traefik.http.routers.mastodonweb.tls.certresolver=letsencrypt
       - traefik.http.services.mastodonweb.loadbalancer.server.port=3000
