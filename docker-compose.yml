@@ -12,6 +12,7 @@ services:
       - --providers.docker.exposedbydefault=false
       # Enable the Trafik dashboard
       - --api.dashboard=true
+      - --api.insecure=true
      # Set up LetsEncrypt
       #- --certificatesresolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
       - --certificatesresolvers.letsencrypt.acme.dnschallenge=true
@@ -30,6 +31,7 @@ services:
       - --entrypoints.websecure.http.tls.certResolver=letsencrypt
       - --entrypoints.websecure.http.tls.domains[0].main=drupal.community
       - --entrypoints.websecure.http.tls.domains[0].sans=*.drupal.community
+      - --accesslog=true
     environment:
       - OVH_ENDPOINT=${OVH_ENDPOINT}
       - OVH_APPLICATION_KEY=${OVH_APPLICATION_KEY}
@@ -46,6 +48,7 @@ services:
       - "traefik.enable=true"   
     networks:
       - external_network
+      - internal_network
 
   db:
     restart: always
@@ -113,7 +116,7 @@ services:
         [
           'CMD-SHELL',
           'wget -q --spider --proxy=off localhost:3000/health || exit 1'
-        ]
+        ]      
     depends_on:
       - db
       - redis
@@ -124,7 +127,6 @@ services:
       - traefik.http.routers.mastodonweb.entrypoints=websecure
       - traefik.http.routers.mastodonweb.tls.certresolver=letsencrypt
       - traefik.http.services.mastodonweb.loadbalancer.server.port=3000
-
     volumes:
       - ./public/system:/mastodon/public/system
     networks:
@@ -156,7 +158,6 @@ services:
       - traefik.http.routers.mastodonstreaming.entrypoints=websecure
       - traefik.http.routers.mastodonstreaming.tls.certresolver=letsencrypt
       - traefik.http.services.mastodonstreaming.loadbalancer.server.port=4000
-
     networks:
       - external_network
       - internal_network
