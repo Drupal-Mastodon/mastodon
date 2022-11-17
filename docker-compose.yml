@@ -50,8 +50,6 @@ services:
       - 'traefik.http.routers.traefik.middlewares=strip'
       - 'traefik.http.middlewares.strip.stripprefix.prefixes=/traefik'
       - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
-      - "traefik.http.middlewares.dashboardauth.basicauth.users=admin:${TRAEFIK_DASHBOARD_ADMIN_PASSWORD}"
-      - "traefik.http.routers.traefik.middlewares=dashboardauth"      
     networks:
       - external_network
 
