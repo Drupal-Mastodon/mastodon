@@ -1,1 +1,6 @@
 .env
+.env.production
+db.env
+.*.swp
+/redis
+/letsencrypt
