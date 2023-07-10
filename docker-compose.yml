@@ -127,6 +127,8 @@ services:
       - traefik.http.routers.mastodonweb.entrypoints=websecure
       - traefik.http.routers.mastodonweb.tls.certresolver=letsencrypt
       - traefik.http.services.mastodonweb.loadbalancer.server.port=3000
+      - traefik.http.middlewares.security-headers.headers.contenttypenosniff=true
+      - traefik.http.middlewares.secure-headers.headers.contentsecuritypolicy="default-src 'none'; form-action 'none'"
     volumes:
       - ./public/system:/mastodon/public/system
     networks:
@@ -158,6 +160,8 @@ services:
       - traefik.http.routers.mastodonstreaming.entrypoints=websecure
       - traefik.http.routers.mastodonstreaming.tls.certresolver=letsencrypt
       - traefik.http.services.mastodonstreaming.loadbalancer.server.port=4000
+      - traefik.http.middlewares.security-headers.headers.contenttypenosniff=true
+      - traefik.http.middlewares.secure-headers.headers.contentsecuritypolicy="default-src 'none'; form-action 'none'"
     networks:
       - external_network
       - internal_network
