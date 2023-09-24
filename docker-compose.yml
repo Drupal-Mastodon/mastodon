@@ -105,7 +105,7 @@ services:
   #       max-size: "10m"
 
   web:
-    image: tootsuite/mastodon:v4.1.7
+    image: tootsuite/mastodon:v4.1.9
     restart: always
     env_file:
       - .env.production
@@ -134,7 +134,7 @@ services:
       - internal_network
 
   streaming:
-    image: tootsuite/mastodon:v4.1.7
+    image: tootsuite/mastodon:v4.1.9
     restart: always
     env_file:
       - .env.production
@@ -163,7 +163,7 @@ services:
       - internal_network
 
   sidekiq:
-    image: tootsuite/mastodon:v4.1.7
+    image: tootsuite/mastodon:v4.1.9
     restart: always
     env_file:
       - .env.production
