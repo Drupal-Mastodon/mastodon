@@ -32,11 +32,6 @@ services:
       - --entrypoints.websecure.http.tls.domains[0].main=drupal.community
       - --entrypoints.websecure.http.tls.domains[0].sans=*.drupal.community
       - --accesslog=true
-    environment:
-      - OVH_ENDPOINT=${OVH_ENDPOINT}
-      - OVH_APPLICATION_KEY=${OVH_APPLICATION_KEY}
-      - OVH_APPLICATION_SECRET=${OVH_APPLICATION_SECRET}
-      - OVH_CONSUMER_KEY=${OVH_CONSUMER_KEY}
     ports:
       - '80:80'
       - '8080:8080'
@@ -46,6 +41,18 @@ services:
       - ./certs:/letsencrypt
     labels:
       - "traefik.enable=true"
+      # Dashboard
+      - "traefik.http.routers.traefik.rule=(Host(`${TRAEFIK_DASHBOARD_DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`)))"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.middlewares=dashboardauth"
+      - "traefik.http.middlewares.dashboardauth.basicauth.users=admin:${TRAEFIK_DASHBOARD_ADMIN_PASSWORD}"
+      # HTTPS Redirect
+      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https@docker"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"      
     networks:
       - external_network
       - internal_network
