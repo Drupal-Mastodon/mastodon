@@ -10,7 +10,7 @@ services:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
       # Enable the Trafik dashboard
-      - --api.dashboard=true
+      - --api.dashboard=false
       - --api.insecure=false
      # Set up LetsEncrypt
       #- --certificatesresolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
