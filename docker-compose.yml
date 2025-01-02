@@ -11,7 +11,7 @@ services:
       - --providers.docker.exposedbydefault=false
       # Enable the Trafik dashboard
       - --api.dashboard=true
-      - --api.insecure=true
+      - --api.insecure=false
      # Set up LetsEncrypt
       #- --certificatesresolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
       - --certificatesresolvers.letsencrypt.acme.dnschallenge=true
@@ -39,12 +39,21 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/letsencrypt
     labels:
-      - "traefik.enable=true"
+      - traefik.enable=true"
+      - traefik.http.middlewares.httpsonly.redirectscheme.scheme=https
+      - traefik.http.middlewares.httpsonly.redirectscheme.permanent=true
+      - traefik.http.routers.httpsonly.rule=HostRegexp(`{any:.*}`)
+      - traefik.http.routers.httpsonly.middlewares=httpsonly
       # Dashboard
-      - "traefik.http.routers.mydashboard.rule=Host(`localhost`)"
-      - "traefik.http.routers.mydashboard.service=api@internal"
-      - "traefik.http.routers.traefik.middlewares=dashboardauth"
-      - "traefik.http.middlewares.dashboardauth.basicauth.users=admin:${TRAEFIK_DASHBOARD_ADMIN_PASSWORD}"
+      - traefik.http.routers.dashboard.entrypoints=websecure
+      - traefik.http.routers.dashboard.tls.certresolver=letsencrypt
+      - traefik.http.routers.dashboard.rule=Host(`drupal.community`) && PathPrefix(`/dashboard`)
+      - traefik.http.routers.dashboard.service=dashboard@internal
+      - traefik.http.routers.traefik.middlewares=dashboardauth
+      - traefik.http.middlewares.dashboardauth.basicauth.users=admin:${TRAEFIK_DASHBOARD_ADMIN_PASSWORD}
+      # API
+      - traefik.http.routers.api.rule=Host(`traefik.drupal.community`) && PathPrefix(`/api`)
+      - traefik.http.routers.api.service=api@internal"      
     networks:
       - external_network
       - internal_network
