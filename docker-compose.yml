@@ -4,7 +4,6 @@ services:
     container_name: traefik
     hostname: traefik
     restart: always
-    env_file: .env.production
     command:
       # Tell Traefik to discover containers using the Docker API
       - --providers.docker=true
