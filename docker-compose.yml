@@ -1,3 +1,57 @@
+---
+
+# Note that configs sometimes need `--force-recreate` flag to be updated
+configs:
+  # Roughly based on https://docs.joinmastodon.org/admin/optional/object-storage-proxy/
+  traefik-assets.yml:
+    content: |
+      ---
+      http:
+        middlewares:
+          assets-tune-request:
+            headers:
+              customRequestHeaders:
+                Host: "${TRAEFIK_ASSET_SERVER_DOMAIN}"
+                Connection: ''
+                Authorization: ''
+                Origin: ''
+              customResponseHeaders:
+                Set-Cookie: ''
+                X-Amz-delete-marker: ''
+                X-Amz-id-2: ''
+                X-Amz-request-id: ''
+                X-Amz-version-id: ''
+          assets-tune-response:
+            headers:
+              accessControlAllowMethods:
+                - GET
+                - OPTIONS
+                - PUT
+              accessControlAllowOriginList:
+                - https://drupal.community
+                - '*'
+              accessControlMaxAge: 100
+              addVaryHeader: true
+        routers:
+          assets:
+            rule: Host(`assets.drupal.community`)
+            service: assets@file
+            tls:
+              certresolver: letsencryt
+              domains:
+                - main: assets.drupal.community
+            entrypoints:
+              - websecure
+            middlewares:
+              - assets-tune-request
+              - assets-tune-response
+        services:
+          assets:
+            loadbalancer:
+              passHostHeader: false
+              servers:
+                - url: https://${TRAEFIK_ASSET_SERVER_DOMAIN}
+
 services:
   traefik:
     image: traefik:latest
@@ -31,6 +85,11 @@ services:
       - --entrypoints.websecure.http.tls.domains[0].main=drupal.community
       - --entrypoints.websecure.http.tls.domains[0].sans=*.drupal.community
       - --accesslog=true
+      #- --accesslog.format=json
+      #- --log.level=DEBUG
+      - --providers.file.filename=traefik-assets.yml
+    configs:
+      - traefik-assets.yml
     ports:
       - '80:80'
       - '8080:8080'
