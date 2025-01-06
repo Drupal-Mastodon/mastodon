@@ -8,7 +8,10 @@ configs:
       ---
       http:
         middlewares:
-          assets-tune-request:
+          assets-add-prefix:
+            addPrefix:
+              prefix: "${TRAEFIK_ASSET_SERVER_PREFIX}"
+          assets-tune-request-headers:
             headers:
               customRequestHeaders:
                 Host: "${TRAEFIK_ASSET_SERVER_DOMAIN}"
@@ -21,7 +24,7 @@ configs:
                 X-Amz-id-2: ''
                 X-Amz-request-id: ''
                 X-Amz-version-id: ''
-          assets-tune-response:
+          assets-tune-response-headers:
             headers:
               accessControlAllowMethods:
                 - GET
@@ -45,8 +48,9 @@ configs:
             entrypoints:
               - websecure
             middlewares:
-              - assets-tune-request
-              - assets-tune-response
+              - assets-add-prefix
+              - assets-tune-request-headers
+              - assets-tune-response-headers
         services:
           assets:
             loadbalancer:
