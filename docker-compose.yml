@@ -32,6 +32,8 @@ services:
       - --entrypoints.websecure.http.tls.domains[0].main=drupal.community
       - --entrypoints.websecure.http.tls.domains[0].sans=*.drupal.community
       - --accesslog=true
+      #- --accesslog.format=json
+      #- --log.level=DEBUG
     ports:
       - '80:80'
       - '8080:8080'
