@@ -32,6 +32,8 @@ configs:
                 - '*'
               accessControlMaxAge: 100
               addVaryHeader: true
+              addPrefix:
+                prefix: "/drupal-mastodon-static"
         routers:
           assets:
             rule: Host(`assets.drupal.community`)
