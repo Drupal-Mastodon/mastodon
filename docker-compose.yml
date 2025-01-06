@@ -1,6 +1,6 @@
 ---
 
-# Note that configs sometimes need `--force-recreate` flag to be updated
+# Note that configs sometimes need `docker compose up -d --force-recreate` to be updated
 configs:
   # Roughly based on https://docs.joinmastodon.org/admin/optional/object-storage-proxy/
   traefik-assets.yml:
