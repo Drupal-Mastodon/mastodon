@@ -193,7 +193,7 @@ services:
       - traefik
     labels:
       - traefik.enable=true
-      - traefik.http.routers.mastodonweb.rule=(Host(`drupal.community`) && !PathPrefix(`/api/udp/routers`) && !PathPrefix(`/api/overview`))
+      - traefik.http.routers.mastodonweb.rule=(Host(`drupal.community`) && !PathPrefix(`/api/udp/routers`) && !PathPrefix(`/api/overview`) && !PathPrefix(`/api/v1/streaming`))
       - traefik.http.routers.mastodonweb.entrypoints=websecure
       - traefik.http.routers.mastodonweb.tls.certresolver=letsencrypt
       - traefik.http.services.mastodonweb.loadbalancer.server.port=3000
