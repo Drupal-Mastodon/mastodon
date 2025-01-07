@@ -35,8 +35,6 @@ configs:
                 - '*'
               accessControlMaxAge: 100
               addVaryHeader: true
-              addPrefix:
-                prefix: "/drupal-mastodon-static"
         routers:
           assets:
             rule: Host(`assets.drupal.community`)
@@ -107,6 +105,7 @@ services:
       - traefik.enable=true
       - traefik.http.middlewares.httpsonly.redirectscheme.scheme=https
       - traefik.http.middlewares.httpsonly.redirectscheme.permanent=true
+      #- traefik.http.routers.httpsonly.entrypoints=web
       - traefik.http.routers.httpsonly.rule=HostRegexp(`{any:.*}`)
       - traefik.http.routers.httpsonly.middlewares=httpsonly
       # Dashboard
