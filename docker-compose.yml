@@ -179,7 +179,7 @@ services:
   #       max-size: "10m"
 
   web:
-    image: ghcr.io/mastodon/mastodon:v4.3.2
+    image: ghcr.io/mastodon/mastodon:v4.3.6
     restart: always
     env_file:
       - .env.production
@@ -204,7 +204,7 @@ services:
       - internal_network
 
   streaming:
-    image: ghcr.io/mastodon/mastodon-streaming:v4.3.2
+    image: ghcr.io/mastodon/mastodon-streaming:v4.3.6
     restart: always
     env_file:
       - .env.production
@@ -229,7 +229,7 @@ services:
       - internal_network
 
   sidekiq:
-    image: ghcr.io/mastodon/mastodon:v4.3.2
+    image: ghcr.io/mastodon/mastodon:v4.3.6
     restart: always
     env_file:
       - .env.production
