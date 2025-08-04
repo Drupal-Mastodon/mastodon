@@ -234,7 +234,7 @@ services:
     env_file:
       - .env.production
       - db.env
-    command: bundle exec sidekiq -q default -q push -q pull -c 25
+    command: bundle exec sidekiq -c 40
     healthcheck:
       test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 7' || false"]
     depends_on:
