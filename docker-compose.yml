@@ -234,7 +234,7 @@ services:
     env_file:
       - .env.production
       - db.env
-    command: bundle exec sidekiq -c $DB_POOL $QUEUESET
+    command: bundle exec sidekiq -C config/sidekiq.yml
     healthcheck:
       test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 7' || false"]
     depends_on:
