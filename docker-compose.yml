@@ -179,7 +179,7 @@ services:
   #       max-size: "10m"
 
   web:
-    image: ghcr.io/mastodon/mastodon:v4.4.2
+    image: ghcr.io/mastodon/mastodon:v4.4.5
     restart: always
     env_file:
       - .env.production
@@ -204,7 +204,7 @@ services:
       - internal_network
 
   streaming:
-    image: ghcr.io/mastodon/mastodon-streaming:v4.4.2
+    image: ghcr.io/mastodon/mastodon-streaming:v4.4.5
     restart: always
     env_file:
       - .env.production
@@ -229,12 +229,12 @@ services:
       - internal_network
 
   sidekiq:
-    image: ghcr.io/mastodon/mastodon:v4.4.2
+    image: ghcr.io/mastodon/mastodon:v4.4.5
     restart: always
     env_file:
       - .env.production
       - db.env
-    command: bundle exec sidekiq -c 40
+    command: bundle exec sidekiq -c 5 -q default
     healthcheck:
       test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 7' || false"]
     depends_on:
