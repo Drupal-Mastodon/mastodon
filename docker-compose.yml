@@ -101,6 +101,11 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/letsencrypt
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
     labels:
       - traefik.enable=true
       - traefik.http.middlewares.httpsonly.redirectscheme.scheme=https
@@ -131,6 +136,11 @@ services:
       - 'POSTGRES_HOST_AUTH_METHOD=trust'
     volumes:
       - ./postgres:/var/lib/postgresql/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
     networks:
       - internal_network
     command: |
@@ -142,12 +152,18 @@ services:
   redis:
     restart: always
     image: redis:8-alpine
+    command: redis-server --maxmemory 512mb --maxmemory-policy noeviction --save ""
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
     volumes:
       - ./redis:/data
     networks:
       - internal_network
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
 
   # es:
   #   restart: always
@@ -186,11 +202,17 @@ services:
       - db.env
     command: bundle exec puma -C config/puma.rb
     healthcheck:
-      test: ['CMD-SHELL',"curl -s --noproxy localhost localhost:3000/health | grep -q 'OK' || exit 1"]
+      test: ['CMD-SHELL', "curl -s --noproxy localhost localhost:3000/health | grep -q 'OK' || exit 1"]
     depends_on:
-      - db
-      - redis
-      - traefik
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
     labels:
       - traefik.enable=true
       - traefik.http.routers.mastodonweb.rule=(Host(`drupal.community`) && !PathPrefix(`/api/udp/routers`) && !PathPrefix(`/api/overview`) && !PathPrefix(`/api/v1/streaming`))
@@ -215,9 +237,15 @@ services:
     expose:
       - "4000"
     depends_on:
-      - db
-      - redis
-      - traefik
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
     labels:
       - traefik.enable=true
       - traefik.http.routers.mastodonstreaming.rule=(Host(`drupal.community`) && PathPrefix(`/api/v1/streaming`))
@@ -228,7 +256,57 @@ services:
       - external_network
       - internal_network
 
-  sidekiq:
+  sidekiq-default:
+    image: ghcr.io/mastodon/mastodon:v4.5.10
+    restart: always
+    env_file:
+      - .env.production
+      - db.env
+    command: bundle exec sidekiq -C config/sidekiq-default.yml
+    healthcheck:
+      test: ['CMD-SHELL', "ps aux | grep '[s]idekiq' | grep -v grep || exit 1"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./public/system:/mastodon/public/system
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    networks:
+      - external_network
+      - internal_network
+
+  sidekiq-pull:
+    image: ghcr.io/mastodon/mastodon:v4.5.10
+    restart: always
+    env_file:
+      - .env.production
+      - db.env
+    command: bundle exec sidekiq -C config/sidekiq-pull.yml
+    healthcheck:
+      test: ['CMD-SHELL', "ps aux | grep '[s]idekiq' | grep -v grep || exit 1"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./public/system:/mastodon/public/system
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    networks:
+      - external_network
+      - internal_network
+
+  sidekiq-scheduler:
     image: ghcr.io/mastodon/mastodon:v4.5.10
     restart: always
     env_file:
@@ -236,13 +314,19 @@ services:
       - db.env
     command: bundle exec sidekiq -C config/sidekiq.yml
     healthcheck:
-      test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 8' || false"]
+      test: ['CMD-SHELL', "ps aux | grep '[s]idekiq' | grep -v grep || exit 1"]
     depends_on:
-      - db
-      - redis
-      - traefik
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./public/system:/mastodon/public/system
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
     networks:
       - external_network
       - internal_network

@@ -1,10 +1,5 @@
-:concurrency: 5
+:concurrency: 2
 :queues:
-  - [default, 8]
-  - [push, 6]
-  - [ingress, 4]
-  - [mailers, 2]
-  - [pull]
   - [scheduler]
 :schedule:
   subscriptions_scheduler:

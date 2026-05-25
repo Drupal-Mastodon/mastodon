@@ -1,0 +1,4 @@
+:concurrency: 10
+:queues:
+  - [pull, 4]
+  - [ingress, 6]
