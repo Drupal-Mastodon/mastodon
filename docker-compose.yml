@@ -272,6 +272,7 @@ services:
         condition: service_healthy
     volumes:
       - ./public/system:/mastodon/public/system
+      - ./config/sidekiq-default.yml:/mastodon/config/sidekiq-default.yml:ro
     logging:
       driver: json-file
       options:
@@ -297,6 +298,7 @@ services:
         condition: service_healthy
     volumes:
       - ./public/system:/mastodon/public/system
+      - ./config/sidekiq-pull.yml:/mastodon/config/sidekiq-pull.yml:ro
     logging:
       driver: json-file
       options:
