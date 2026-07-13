@@ -6,9 +6,14 @@ cd "$(dirname "$0")/.."  # repo root, where docker-compose.yml lives
 
 log() { echo "[$(date '+%F %T')] $*"; }
 
+# Ctrl+C stops the whole script, not just the current step.
+trap 'log "interrupted"; exit 130' INT TERM
+
 run() {
   log "START $*"
-  "$@" || log "FAILED (continuing): $*"
+  # </dev/null: docker compose exec grabs stdin and reports "canceled"
+  # when it's not a real terminal (cron, backgrounded shells).
+  "$@" </dev/null || log "FAILED (continuing): $*"
 }
 
 # Remote toots older than 90 days, skipping anything a local user

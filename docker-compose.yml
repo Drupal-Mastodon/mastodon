@@ -124,6 +124,17 @@ services:
       - external_network
       - internal_network
 
+  # Restarts any container that goes unhealthy — docker's restart policy only
+  # covers exited containers, and Traefik drops unhealthy ones from routing (404).
+  autoheal:
+    image: willfarrell/autoheal:latest
+    restart: always
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=all
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    network_mode: none
+
   db:
     restart: always
     image: postgres:14-alpine
