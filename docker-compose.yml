@@ -270,6 +270,9 @@ services:
   sidekiq-default:
     image: ghcr.io/mastodon/mastodon:v4.5.10
     restart: always
+    # Half CPU priority vs web/traefik (1024 default) — only under contention,
+    # keeps site responsive while ffmpeg transcodes media.
+    cpu_shares: 512
     env_file:
       - .env.production
       - db.env
@@ -296,6 +299,7 @@ services:
   sidekiq-pull:
     image: ghcr.io/mastodon/mastodon:v4.5.10
     restart: always
+    cpu_shares: 512
     env_file:
       - .env.production
       - db.env
@@ -322,6 +326,7 @@ services:
   sidekiq-scheduler:
     image: ghcr.io/mastodon/mastodon:v4.5.10
     restart: always
+    cpu_shares: 512
     env_file:
       - .env.production
       - db.env
