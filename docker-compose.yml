@@ -206,7 +206,7 @@ services:
   #       max-size: "10m"
 
   web:
-    image: ghcr.io/mastodon/mastodon:v4.5.10
+    image: ghcr.io/mastodon/mastodon:v4.7.2
     restart: always
     env_file:
       - .env.production
@@ -237,7 +237,7 @@ services:
       - internal_network
 
   streaming:
-    image: ghcr.io/mastodon/mastodon-streaming:v4.5.10
+    image: ghcr.io/mastodon/mastodon-streaming:v4.7.2
     restart: always
     env_file:
       - .env.production
@@ -268,7 +268,7 @@ services:
       - internal_network
 
   sidekiq-default:
-    image: ghcr.io/mastodon/mastodon:v4.5.10
+    image: ghcr.io/mastodon/mastodon:v4.7.2
     restart: always
     # Half CPU priority vs web/traefik (1024 default) — only under contention,
     # keeps site responsive while ffmpeg transcodes media.
@@ -297,7 +297,7 @@ services:
       - internal_network
 
   sidekiq-pull:
-    image: ghcr.io/mastodon/mastodon:v4.5.10
+    image: ghcr.io/mastodon/mastodon:v4.7.2
     restart: always
     cpu_shares: 512
     env_file:
@@ -324,7 +324,7 @@ services:
       - internal_network
 
   sidekiq-scheduler:
-    image: ghcr.io/mastodon/mastodon:v4.5.10
+    image: ghcr.io/mastodon/mastodon:v4.7.2
     restart: always
     cpu_shares: 512
     env_file:
